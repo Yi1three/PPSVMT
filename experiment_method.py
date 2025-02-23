@@ -62,6 +62,7 @@ def cross_train(jdata, ndata, jtabel, ntabel, T, train_method, public_key, priva
             FPsum += FP
             FNsum += FN
             TNsum += TN
+
             print("该次测试样本总数：%d，分类正确总数：%d，正确率：%.3f" % (test_num, asum, asum / test_num))
             print("TP=%d,FP=%d,FN=%d,TN=%d" % (TP, FP, FN, TN))
     return TPsum, FPsum, FNsum, TNsum, iter_num, tsum, run_time, DPtime_sum, DACtime_sum

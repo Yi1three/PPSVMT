@@ -120,6 +120,7 @@ def old_model(train_x, train_y, m, public_key, private_key):
         t += 1
         DACend = time.time()
         DACtime += DACend - DACbegin
+
     print("迭代次数：",t)
     return omega, b, t, DPtime, DACtime
 
@@ -191,78 +192,12 @@ def exp_model(train_x, train_y, m, public_key, private_key):
         t += 1
         DACend = time.time()
         DACtime += DACend - DACbegin
-
+        print("omega密文值为:")
+        for i in range(len(omega)):
+            print(encrypted_omega[i,0].ciphertext()," ")
+        print("b密文值为:",encrypted_b.ciphertext())
+        print("梯度值为:",delta.T)
+    print("omega、b明文值：", omega.T, b)
     print("迭代次数：",t)
     return omega, b, t, DPtime, DACtime
 
-def log_model(train_x, train_y, m, public_key, private_key):
-    # 以log函数作为损失函数
-    DPtime = 0
-    DACtime = 0
-
-    # DAC 计时
-    DACbegin = time.time()
-    omega = np.mat([0]*(train_x[0].shape[0])).T
-    b = 0
-    temp_delta = np.mat([public_key.encrypt(float(x[0, 0])) for x in omega]).T
-    temp_delta_b = public_key.encrypt(b)
-    print("omega、b初值：",omega.T,b)
-    lam = 0.01
-    T = 500
-    precision = 1e-3
-    cost =10
-    C = 1/m
-    print("C值：",C,",lam值：",lam)
-    t = 0
-    fcost = cost
-    pcost = 1
-    DACend = time.time()
-    DACtime += DACend-DACbegin
-
-    # DP 计时
-    DPbegin = time.time()
-    sumyx = omega.copy()
-    sumy = 0
-    for i in range(m):
-        sumyx = sumyx - train_y[i] * train_x[i]
-        sumy -= train_y[i]
-    DPend = time.time()
-    DPtime += DPend-DPbegin
-    while pcost > precision and t < T:
-        # DAC 计时
-        DACbegin = time.time()
-        encrypted_omega = np.mat([public_key.encrypt(float(x[0,0])) for x in omega]).T
-        encrypted_b = public_key.encrypt(b)
-        DACend = time.time()
-        DACtime += DACend - DACbegin
-
-        # DP 计时
-        DPbegin = time.time()
-        encrypted_delta = temp_delta.copy()
-        encrypted_delta_b = temp_delta_b
-        for i in range(m):
-            encrypted_a = (encrypted_omega.T * train_x[i] + encrypted_b)[0,0]
-            for j in range(train_x[i].shape[0]):
-                encrypted_delta[j,0] += train_x[i][j,0] * encrypted_a
-            encrypted_delta_b += encrypted_a
-        DPend = time.time()
-        DPtime += DPend - DPbegin
-
-        # DAC 计时
-        DACbegin = time.time()
-        delta = np.mat([private_key.decrypt(x[0,0]) for x in encrypted_delta]).T
-        delta = omega + C * (delta + sumyx)
-        delta_b = private_key.decrypt(encrypted_delta_b)
-        delta_b = C*(delta_b + sumy)
-
-        omega = omega - lam*delta
-        b -= lam*delta_b
-        cost = np.linalg.norm(np.vstack((omega, b)), 2)
-        pcost = abs(cost - fcost)
-        fcost = cost
-        t += 1
-        DACend = time.time()
-        DACtime += DACend - DACbegin
-
-    print("迭代次数：",t)
-    return omega, b, t, DPtime, DACtime

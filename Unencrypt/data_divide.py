@@ -95,6 +95,7 @@ def read_data(data_set, stand_method):
     ntabel = []
     jnum = 0
     nnum = 0
+
     with open(data_set) as file:
         for line in file:
             adata = line.strip().split(',')
